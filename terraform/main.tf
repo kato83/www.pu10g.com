@@ -184,7 +184,7 @@ resource "aws_lambda_permission" "this" {
 resource "aws_api_gateway_rest_api" "this" {
   name = "www.${aws_route53_zone.this.name}-api"
   body = templatefile("./openapi.yml", {
-    sample_arn    = aws_lambda_function.sample.invoke_arn
+    sample_arn = aws_lambda_function.sample.invoke_arn
   })
 }
 
