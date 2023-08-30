@@ -1,0 +1,64 @@
+openapi: 3.0.0
+info:
+  title: Amazon API Gateway
+  version: 1.0.0
+servers:
+  - url: "{protocol}://{hostname}/{stage}"
+    variables:
+      protocol:
+        default: https
+        enum:
+          - http
+          - https
+      hostname:
+        default: ""
+      stage:
+        default: prod
+paths:
+  /v1/sample:
+    post:
+      summary: SAMPLE
+      responses:
+        "200":
+          description: 成功時
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        uri: "${sample_arn}"
+        httpMethod: POST
+        payloadFormatVersion: "2.0"
+    get:
+      summary: SAMPLE
+      responses:
+        "200":
+          description: 成功時
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        uri: "${sample_arn}"
+        httpMethod: POST
+        payloadFormatVersion: "2.0"
+    options:
+      responses:
+        "200":
+          description: Preflightリクエスト
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: "mock"
+        requestTemplates:
+          application/json: '{ "statusCode" : 200 }'
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
