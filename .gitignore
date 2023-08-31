@@ -14,3 +14,4 @@ terraform.rc
 terraform/backend.conf
 
 dist/
+node_modules/
