@@ -15,7 +15,7 @@ servers:
       stage:
         default: prod
 paths:
-  /v1/sample:
+  /v1/content:
     post:
       summary: SAMPLE
       responses:
@@ -23,7 +23,7 @@ paths:
           description: 成功時
       x-amazon-apigateway-integration:
         type: aws_proxy
-        uri: "${sample_arn}"
+        uri: "${www_pu10g_com_dynamo_content_arn}"
         httpMethod: POST
         payloadFormatVersion: "2.0"
     get:
@@ -33,7 +33,7 @@ paths:
           description: 成功時
       x-amazon-apigateway-integration:
         type: aws_proxy
-        uri: "${sample_arn}"
+        uri: "${www_pu10g_com_dynamo_content_arn}"
         httpMethod: POST
         payloadFormatVersion: "2.0"
     options:

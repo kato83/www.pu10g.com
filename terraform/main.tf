@@ -131,23 +131,22 @@ resource "aws_cloudfront_origin_access_control" "this" {
 }
 
 # Lambda
-data "archive_file" "sample_zip" {
+data "archive_file" "aws_sdk_zip" {
   type        = "zip"
-  source_dir  = "../lambda"
-  output_path = "../dist/lambda.zip"
+  source_dir  = "../lambda/layer/aws-sdk"
+  output_path = "../dist/lambda/layer/aws-sdk.zip"
 }
 
-resource "aws_lambda_function" "sample" {
-  function_name    = "sample"
-  role             = aws_iam_role.this.arn
-  runtime          = "nodejs18.x"
-  handler          = "sample.handler"
-  source_code_hash = data.archive_file.sample_zip.output_base64sha256
-  filename         = data.archive_file.sample_zip.output_path
+# lambda の レイヤー作成（aws-sdk）
+resource "aws_lambda_layer_version" "aws_sdk" {
+  layer_name          = "aws-sdk"
+  compatible_runtimes = ["nodejs18.x"]
+  filename            = data.archive_file.aws_sdk_zip.output_path
+  source_code_hash    = data.archive_file.aws_sdk_zip.output_base64sha256
 }
 
 resource "aws_iam_role" "this" {
-  name = "lambda-blog-role"
+  name = "www.${aws_route53_zone.this.name}-lambda-assume-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -171,20 +170,59 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution_access" {
   role       = aws_iam_role.this.name
 }
 
-# Lambda 関数 sample を API Gateway から叩けるようにする
-resource "aws_lambda_permission" "this" {
+
+# Lambda 関数 content の zip 圧縮
+data "archive_file" "content_zip" {
+  type        = "zip"
+  source_dir  = "../dist/lambda/content"
+  output_path = "../dist/lambda/content.zip"
+}
+
+# Lambda関数 www_pu10g_com_dynamo_content を作成
+resource "aws_lambda_function" "www_pu10g_com_dynamo_content" {
+  function_name    = "www_pu10g_com_dynamo_content"
+  role             = aws_iam_role.this.arn
+  runtime          = "nodejs18.x"
+  handler          = "content.handler"
+  source_code_hash = data.archive_file.content_zip.output_base64sha256
+  filename         = data.archive_file.content_zip.output_path
+  layers = [
+    aws_lambda_layer_version.aws_sdk.arn
+  ]
+}
+
+# Lambda 関数 www_pu10g_com_dynamo_content を API Gateway から叩けるようにする
+resource "aws_lambda_permission" "www_pu10g_com_dynamo_content" {
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.sample.arn
+  function_name = aws_lambda_function.www_pu10g_com_dynamo_content.arn
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/*"
 }
 
+# 独自のポリシーを作成し、IAMロールにアタッチ
+resource "aws_iam_role_policy" "policy" {
+  name = "www.${aws_route53_zone.this.name}-policy"
+  role = aws_iam_role.this.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem",
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
 
 # API Gateway の立ち上げ
 resource "aws_api_gateway_rest_api" "this" {
   name = "www.${aws_route53_zone.this.name}-api"
   body = templatefile("./openapi.yml", {
-    sample_arn = aws_lambda_function.sample.invoke_arn
+    www_pu10g_com_dynamo_content_arn = aws_lambda_function.www_pu10g_com_dynamo_content.invoke_arn
   })
 }
 
