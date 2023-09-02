@@ -59,6 +59,7 @@ resource "aws_iam_role_policy" "this" {
         Action = [
           "dynamodb:PutItem",
           "dynamodb:DeleteItem",
+          "dynamodb:BatchWriteItem",
         ]
         Resource = "*"
       }
@@ -110,7 +111,7 @@ resource "aws_lambda_function" "www_pu10g_com_dynamo_content" {
   function_name    = "www_pu10g_com_dynamo_content"
   role             = aws_iam_role.this.arn
   runtime          = "nodejs18.x"
-  handler          = "content.handler"
+  handler          = "dynamo-content.handler"
   source_code_hash = data.archive_file.lambda_www_pu10g_com_dynamo_content_zip.output_base64sha256
   filename         = data.archive_file.lambda_www_pu10g_com_dynamo_content_zip.output_path
   layers = [

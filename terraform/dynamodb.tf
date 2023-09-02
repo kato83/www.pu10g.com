@@ -21,7 +21,7 @@ resource "aws_dynamodb_table" "archived_table" {
   name         = "www.${aws_route53_zone.this.name}-archived"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "ULID"
-  range_key    = "Revision"
+  range_key    = "DataTypeRevision"
 
   attribute {
     name = "ULID"
@@ -29,7 +29,7 @@ resource "aws_dynamodb_table" "archived_table" {
   }
 
   attribute {
-    name = "Revision"
+    name = "DataTypeRevision"
     type = "S"
   }
 }
