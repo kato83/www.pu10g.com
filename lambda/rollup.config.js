@@ -22,5 +22,6 @@ const entry = name => ({
 });
 
 export default [
-  entry('content')
+  entry('dynamo-content'),
+  entry('basic-auth'),
 ]
