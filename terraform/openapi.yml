@@ -13,14 +13,35 @@ servers:
       hostname:
         default: ""
       stage:
-        default: prod
+        default: api
+
+tags:
+  - name: default
+  - name: options
+
 paths:
   /v1/content:
     post:
       summary: SAMPLE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Revision:
+                  type: string
+            example:
+              {
+                "Revision": "2023-09-02T01:20:00Z"
+              }
       responses:
         "200":
           description: 成功時
+      security:
+        - lambda-authorizer: []
+        - basic-authorizer: []
       x-amazon-apigateway-integration:
         type: aws_proxy
         uri: "${www_pu10g_com_dynamo_content_arn}"
@@ -37,6 +58,8 @@ paths:
         httpMethod: POST
         payloadFormatVersion: "2.0"
     options:
+      tags:
+        - options
       responses:
         "200":
           description: Preflightリクエスト
@@ -62,3 +85,24 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
+
+# https://github.com/hashicorp/terraform-provider-aws/issues/26847
+# https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
+# https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authtype.html
+# https://swagger.io/docs/specification/authentication/basic-authentication/
+components:
+  securitySchemes:
+    lambda-authorizer:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authorizer:
+        type: REQUEST
+        identitySource: method.request.header.Authorization
+        authorizerUri: ${www_pu10g_com_basic_auth_arn}
+        authorizerPayloadFormatVersion: '2.0'
+        authorizerResultTtlInSeconds: 0
+      x-amazon-apigateway-authtype: Custom scheme with corporate claims
+    basic-authorizer:
+      type: http
+      scheme: basic

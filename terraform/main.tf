@@ -33,30 +33,6 @@ resource "aws_acm_certificate" "this" {
   }
 }
 
-# S3
-resource "aws_s3_bucket" "www_pu10g_com" {
-  bucket = "www.${aws_route53_zone.this.name}-web"
-}
-
-
-resource "aws_s3_bucket_ownership_controls" "www_pu10g_com" {
-  bucket = aws_s3_bucket.www_pu10g_com.id
-  rule {
-    object_ownership = "BucketOwnerPreferred"
-  }
-}
-
-resource "aws_s3_bucket_acl" "www_pu10g_com" {
-  depends_on = [aws_s3_bucket_ownership_controls.www_pu10g_com]
-  bucket     = aws_s3_bucket.www_pu10g_com.id
-  acl        = "private"
-}
-
-resource "aws_s3_bucket_policy" "www_pu10g_com" {
-  bucket = aws_s3_bucket.www_pu10g_com.id
-  policy = data.aws_iam_policy_document.www_pu10g_com.json
-}
-
 data "aws_iam_policy_document" "www_pu10g_com" {
   statement {
     sid    = "Allow CloudFront"
@@ -130,108 +106,31 @@ resource "aws_cloudfront_origin_access_control" "this" {
   signing_protocol                  = "sigv4"
 }
 
-# Lambda
-data "archive_file" "aws_sdk_zip" {
-  type        = "zip"
-  source_dir  = "../lambda/layer/aws-sdk"
-  output_path = "../dist/lambda/layer/aws-sdk.zip"
-}
-
-# lambda の レイヤー作成（aws-sdk）
-resource "aws_lambda_layer_version" "aws_sdk" {
-  layer_name          = "aws-sdk"
-  compatible_runtimes = ["nodejs18.x"]
-  filename            = data.archive_file.aws_sdk_zip.output_path
-  source_code_hash    = data.archive_file.aws_sdk_zip.output_base64sha256
-}
-
-resource "aws_iam_role" "this" {
-  name = "www.${aws_route53_zone.this.name}-lambda-assume-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = [
-            "lambda.amazonaws.com",
-            "apigateway.amazonaws.com"
-          ]
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_basic_execution_access" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.this.name
-}
-
-
-# Lambda 関数 content の zip 圧縮
-data "archive_file" "content_zip" {
-  type        = "zip"
-  source_dir  = "../dist/lambda/content"
-  output_path = "../dist/lambda/content.zip"
-}
-
-# Lambda関数 www_pu10g_com_dynamo_content を作成
-resource "aws_lambda_function" "www_pu10g_com_dynamo_content" {
-  function_name    = "www_pu10g_com_dynamo_content"
-  role             = aws_iam_role.this.arn
-  runtime          = "nodejs18.x"
-  handler          = "content.handler"
-  source_code_hash = data.archive_file.content_zip.output_base64sha256
-  filename         = data.archive_file.content_zip.output_path
-  layers = [
-    aws_lambda_layer_version.aws_sdk.arn
-  ]
-}
-
-# Lambda 関数 www_pu10g_com_dynamo_content を API Gateway から叩けるようにする
-resource "aws_lambda_permission" "www_pu10g_com_dynamo_content" {
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.www_pu10g_com_dynamo_content.arn
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/*"
-}
-
-# 独自のポリシーを作成し、IAMロールにアタッチ
-resource "aws_iam_role_policy" "policy" {
-  name = "www.${aws_route53_zone.this.name}-policy"
-  role = aws_iam_role.this.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:PutItem",
-          "dynamodb:DeleteItem",
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
 # API Gateway の立ち上げ
 resource "aws_api_gateway_rest_api" "this" {
   name = "www.${aws_route53_zone.this.name}-api"
   body = templatefile("./openapi.yml", {
     www_pu10g_com_dynamo_content_arn = aws_lambda_function.www_pu10g_com_dynamo_content.invoke_arn
+    www_pu10g_com_basic_auth_arn     = aws_lambda_function.www_pu10g_com_basic_auth.invoke_arn
   })
 }
 
-# API Gateway のデプロイとして prod を用意する
+# API Gateway のデプロイとして api を用意する
 resource "aws_api_gateway_deployment" "deployment" {
   rest_api_id = aws_api_gateway_rest_api.this.id
   depends_on  = [aws_api_gateway_rest_api.this]
   stage_name  = "api"
   triggers = {
     redeployment = sha1(jsonencode(aws_api_gateway_rest_api.this))
+  }
+}
+
+resource "aws_api_gateway_gateway_response" "test" {
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+  status_code   = "401"
+  response_type = "UNAUTHORIZED"
+
+  response_parameters = {
+    "gatewayresponse.header.WWW-Authenticate" = "'Basic'"
   }
 }
