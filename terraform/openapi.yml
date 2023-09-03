@@ -20,8 +20,21 @@ tags:
   - name: options
 
 paths:
-  /v1/content/{ULID}:
-    patch:
+  /v1/content:
+    get:
+      summary: SAMPLE
+      responses:
+        "200":
+          description: 成功時
+      security:
+        - lambda-authorizer: []
+        - basic-authorizer: []
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        uri: "${www_pu10g_com_dynamo_content_arn}"
+        httpMethod: POST
+        payloadFormatVersion: "2.0"
+    post:
       summary: SAMPLE
       requestBody:
         required: true
@@ -29,12 +42,11 @@ paths:
           application/json:
             schema:
               type: object
-              properties:
-                Revision:
-                  type: string
             example:
               {
-                "Revision": "2023-09-02T01:20:00Z"
+                "title": "コンテンツタイトル",
+                "content": "コンテンツ本文\nコンテンツ本文",
+                "isPublish": true,
               }
       responses:
         "200":
@@ -75,22 +87,9 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,PATCH'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
-  /v1/content:
-    post:
+  /v1/content/{ULID}:
+    get:
       summary: SAMPLE
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                Revision:
-                  type: string
-            example:
-              {
-                "Revision": "2023-09-02T01:20:00Z"
-              }
       responses:
         "200":
           description: 成功時
@@ -128,11 +127,27 @@ paths:
         uri: "${www_pu10g_com_dynamo_content_arn}"
         httpMethod: POST
         payloadFormatVersion: "2.0"
-    get:
+    delete:
       summary: SAMPLE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Revision:
+                  type: string
+            example:
+              {
+                "Revision": "2023-09-02T01:20:00Z"
+              }
       responses:
         "200":
           description: 成功時
+      security:
+        - lambda-authorizer: []
+        - basic-authorizer: []
       x-amazon-apigateway-integration:
         type: aws_proxy
         uri: "${www_pu10g_com_dynamo_content_arn}"

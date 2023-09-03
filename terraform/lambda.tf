@@ -57,8 +57,11 @@ resource "aws_iam_role_policy" "this" {
       {
         Effect = "Allow"
         Action = [
+          "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
           "dynamodb:BatchWriteItem",
         ]
         Resource = "*"
