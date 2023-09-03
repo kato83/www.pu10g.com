@@ -181,6 +181,61 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,PATCH'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
+  /v1/render-page/{ULID}:
+    post:
+      summary: SAMPLE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Revision:
+                  type: string
+            example:
+              {
+                "Revision": "2023-09-02T01:20:00Z"
+              }
+      responses:
+        "200":
+          description: 成功時
+      security:
+        - lambda-authorizer: []
+        - basic-authorizer: []
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        uri: "${www_pu10g_com_render_page_arn}"
+        httpMethod: POST
+        payloadFormatVersion: "2.0"
+    options:
+      tags:
+        - options
+      responses:
+        "200":
+          description: Preflightリクエスト
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: "mock"
+        requestTemplates:
+          application/json: '{ "statusCode" : 200 }'
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,PATCH'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
 
 # https://github.com/hashicorp/terraform-provider-aws/issues/26847
 # https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html

@@ -94,8 +94,10 @@ resource "aws_cloudfront_distribution" "this" {
 
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
+    default_ttl            = 0
+    max_ttl                = 0
+    # default_ttl            = 3600
+    # max_ttl                = 86400
   }
 }
 
@@ -112,6 +114,7 @@ resource "aws_api_gateway_rest_api" "this" {
   body = templatefile("./openapi.yml", {
     www_pu10g_com_dynamo_content_arn = aws_lambda_function.www_pu10g_com_dynamo_content.invoke_arn
     www_pu10g_com_basic_auth_arn     = aws_lambda_function.www_pu10g_com_basic_auth.invoke_arn
+    www_pu10g_com_render_page_arn    = aws_lambda_function.www_pu10g_com_render_page.invoke_arn
   })
 }
 

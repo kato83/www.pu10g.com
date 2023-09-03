@@ -63,6 +63,9 @@ resource "aws_iam_role_policy" "this" {
           "dynamodb:Query",
           "dynamodb:Scan",
           "dynamodb:BatchWriteItem",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:PutObject"
         ]
         Resource = "*"
       }
@@ -126,6 +129,34 @@ resource "aws_lambda_function" "www_pu10g_com_dynamo_content" {
 resource "aws_lambda_permission" "www_pu10g_com_dynamo_content" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.www_pu10g_com_dynamo_content.arn
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/*"
+}
+
+# Lambda 関数の実装（コンテンツ DynamoDB の操作）の zip 圧縮
+data "archive_file" "lambda_www_pu10g_com_render_page_zip" {
+  type        = "zip"
+  source_dir  = "../dist/lambda/render-page"
+  output_path = "../dist/lambda/render-page.zip"
+}
+
+# Lambda関数 www_pu10g_com_render_page を作成
+resource "aws_lambda_function" "www_pu10g_com_render_page" {
+  function_name    = "www_pu10g_com_render_page"
+  role             = aws_iam_role.this.arn
+  runtime          = "nodejs18.x"
+  handler          = "render-page.handler"
+  source_code_hash = data.archive_file.lambda_www_pu10g_com_render_page_zip.output_base64sha256
+  filename         = data.archive_file.lambda_www_pu10g_com_render_page_zip.output_path
+  layers = [
+    aws_lambda_layer_version.layer_aws_sdk.arn
+  ]
+}
+
+# Lambda 関数 www_pu10g_com_render_page を API Gateway から叩けるようにする
+resource "aws_lambda_permission" "www_pu10g_com_render_page" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.www_pu10g_com_render_page.arn
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/*"
 }

@@ -4,10 +4,15 @@ import { terser } from "rollup-plugin-terser";
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 
-const entry = name => ({
-  input: `${name}/${name}.ts`,
+export default {
+  input: {
+    "dynamo-content/dynamo-content": "dynamo-content/dynamo-content.ts",
+    "basic-auth/basic-auth": "basic-auth/basic-auth.ts",
+    "render-page/render-page": "render-page/render-page.ts",
+  },
   output: {
-    dir: `../dist/lambda/${name}`,
+    dir: `../dist/lambda/`,
+    entryFileNames: '[name].js',
     format: 'cjs',
     exports: "named",
     sourcemap: true,
@@ -19,9 +24,4 @@ const entry = name => ({
     json(),
     terser({ output: { comments: /@license/i } }),
   ]
-});
-
-export default [
-  entry('dynamo-content'),
-  entry('basic-auth'),
-]
+};

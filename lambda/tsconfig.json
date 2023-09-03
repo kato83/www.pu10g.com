@@ -19,6 +19,8 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
     "declaration": false,
     "rootDir": ".",
     "baseUrl": ".",
@@ -34,6 +36,7 @@
   ],
   "include": [
     "./**/*.ts",
+    "./**/*.tsx",
     "./types/**/*.d.ts"
   ]
 }
