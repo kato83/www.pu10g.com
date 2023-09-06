@@ -1,12 +1,7 @@
-// バンドルしたくないものは require 指定
-const aws = require('aws-sdk');
-
-// バンドルしたいものは ESModule 形式で指定
-// ※import type は型なのでバンドルされない
-import type AWS from 'aws-sdk';
+import { DynamoDB } from 'aws-sdk';
 import { factory, detectPrng } from 'ulid';
 
-const dynamoDB: AWS.DynamoDB = new aws.DynamoDB();
+const dynamoDB: AWS.DynamoDB = new DynamoDB();
 
 type ApiGatewayEvent = {
   pathParameters: { [key: string]: string };
@@ -25,15 +20,6 @@ exports.handler = async (event: ApiGatewayEvent) => {
     isBase64Encoded: false
   });
 
-  const value2Type = (value: any) => {
-    if (typeof value === 'string') return 'S';
-    if (typeof value === 'number') return 'N';
-    if (typeof value === 'boolean') return 'BOOL';
-    if (Array.isArray(value) && value.every(k => typeof k === 'string')) return 'SS';
-    // @todo 他の型の対応が必要になったら条件分岐を追加する必要がある
-    return 'S';
-  };
-
   const getItem = async (tableName: string, ULID: string) => {
     const param = {
       TableName: tableName,
@@ -47,8 +33,6 @@ exports.handler = async (event: ApiGatewayEvent) => {
     return dynamoDB.query(param).promise();
   }
 
-  console.log(JSON.stringify(event, null, '  '));
-
   const prng = detectPrng(true);
   const ulid = factory(prng)();
 
@@ -58,6 +42,8 @@ exports.handler = async (event: ApiGatewayEvent) => {
     tags: string[];
     content: string;
     isPublish: boolean;
+    updatedAt?: string;
+    createdAt?: string;
   }
 
   const method = event.httpMethod;
@@ -66,19 +52,8 @@ exports.handler = async (event: ApiGatewayEvent) => {
     switch (method) {
       case 'GET': {
         const ULID = event.pathParameters?.ULID;
-
         const result = await (ULID ? getItem('www.pu10g.com-published', ULID) : dynamoDB.scan({ TableName: 'www.pu10g.com-published' }).promise());
-        console.log(result);
-        // @todo reduce の第二引数の型指定 never のやつ
-        const responseData = (result.Items ?? []).reduce((acc, current: { [key: string]: any }) => {
-          if (acc.Items.length === 0) acc.Items = [{ ULID: current.ULID.S }];
-          if (acc.Items[acc.Items.length - 1].ULID === current.ULID.S) {
-            acc.Items[acc.Items.length - 1][current.DataType.S] = Object.values(current.DataValue)[0];
-          } else {
-            acc.Items[acc.Items.length] = { [current.DataType.S]: Object.values(current.DataValue)[0], ULID: current.ULID.S };
-          }
-          return acc;
-        }, { ...result, Items: ([] as Array<any>) });
+        const responseData = apply(result.Items ?? []);
         return createResponse(200, responseData);
       }
       case 'PATCH':
@@ -90,32 +65,22 @@ exports.handler = async (event: ApiGatewayEvent) => {
         const date = new Date().toISOString();
         payload['updatedAt'] = date;
         payload['createdAt'] = date;
-        const createRequestItems = (tableName: string) => [...Object.keys(payload)
-          // @todo ホワイトリスト形式にする
-          .filter(key => method === 'POST' || key !== 'createdAt')
-          .map(key => {
-            const data = {
-              PutRequest: {
-                Item: {
-                  ULID: { S: method === 'POST' ? ulid : event.pathParameters.ULID },
-                  DataType: { S: key },
-                  DataValue: { [value2Type(payload[key])]: payload[key] }
-                }
-              }
-            };
-            if (tableName === 'www.pu10g.com-archived') data.PutRequest.Item['DataTypeRevision'] = { S: `${key}#${ulid}` };
-            return data;
-          })];
 
-        const RequestItems = { 'www.pu10g.com-archived': createRequestItems('www.pu10g.com-archived') };
-        if (payload.isPublish) RequestItems['www.pu10g.com-published'] = createRequestItems('www.pu10g.com-published');
+        const RequestItems = {
+          'www.pu10g.com-archived': unapply(
+            'www.pu10g.com-archived',
+            payload,
+            method === 'POST' ? ulid : event.pathParameters?.ULID,
+            method)
+        };
+        if (payload.isPublish) RequestItems['www.pu10g.com-published'] = unapply(
+          'www.pu10g.com-published',
+          payload,
+          method === 'POST' ? ulid : event.pathParameters?.ULID,
+          method
+        );
 
-        console.debug(JSON.stringify(RequestItems, null, '  '));
-
-        const result = await dynamoDB.batchWriteItem({ RequestItems })
-          .promise();
-        console.log(result);
-
+        await dynamoDB.batchWriteItem({ RequestItems }).promise();
         return createResponse(200, 'OK');
       }
       case 'DELETE': {
@@ -142,8 +107,7 @@ exports.handler = async (event: ApiGatewayEvent) => {
         if (publishedItems.length > 0) params.RequestItems['www.pu10g.com-published'] = publishedItems;
         if (archivedItems.length > 0) params.RequestItems['www.pu10g.com-archived'] = archivedItems;
 
-        const result = await dynamoDB.batchWriteItem(params).promise();
-        console.debug(result);
+        await dynamoDB.batchWriteItem(params).promise();
 
         return createResponse(200, 'OK');
       }
@@ -157,3 +121,51 @@ exports.handler = async (event: ApiGatewayEvent) => {
 
   return createResponse(403, 'Request method is invalid.');
 };
+
+export const unapply = (
+  tableName: 'www.pu10g.com-archived' | 'www.pu10g.com-published',
+  payload: { [key: string]: any },
+  ulid: string,
+  method: 'PATCH' | 'POST'
+) => {
+  const value2Type = (value: any) => {
+    if (typeof value === 'string') return 'S';
+    if (typeof value === 'number') return 'N';
+    if (typeof value === 'boolean') return 'BOOL';
+    if (Array.isArray(value) && value.every(k => typeof k === 'string')) return 'SS';
+    // @todo 他の型の対応が必要になったら条件分岐を追加する必要がある
+    return 'S';
+  };
+
+  return [...Object.keys(payload)
+    // @todo ホワイトリスト形式にする
+    .filter(key => method === 'POST' || key !== 'createdAt')
+    .map(key => {
+      const data = {
+        PutRequest: {
+          Item: {
+            ULID: { S: ulid },
+            DataType: { S: key },
+            DataValue: { [value2Type(payload[key])]: payload[key] }
+          }
+        }
+      };
+      if (tableName === 'www.pu10g.com-archived') data.PutRequest.Item['DataTypeRevision'] = { S: `${key}#${ulid}` };
+      return data;
+    })];
+};
+
+type DynamoContentList = {
+  ULID: string;
+} & { [key: string]: any };
+
+export const apply = (items: AWS.DynamoDB.ItemList) => items.reduce<DynamoContentList[]>((list, current) => {
+  if (list.length === 0) list = [{ ULID: current.ULID.S! }];
+  const offset = list[list.length - 1].ULID === current.ULID.S ? -1 : 0
+  list[list.length - offset] = {
+    ...list[list.length - 1],
+    [current.DataType.S!]: Object.values(current.DataValue)[0],
+    ULID: current.ULID.S!
+  };
+  return list;
+}, []);
