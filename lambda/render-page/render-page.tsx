@@ -1,6 +1,7 @@
 import { S3, DynamoDB } from 'aws-sdk';
 import render from 'preact-render-to-string';
 import { Article } from './Article';
+import { apply } from '../dynamo-utils';
 
 const dynamoDB = new DynamoDB();
 
@@ -55,17 +56,3 @@ exports.handler = async (event: ApiGatewayEvent) => {
 
   return createResponse(403, 'Request method is invalid.');
 };
-
-type DynamoContentList = {
-  ULID: string;
-} & { [key: string]: any };
-
-export const apply = (items: AWS.DynamoDB.ItemList) => items.reduce<DynamoContentList[]>((list, current: { [key: string]: any }) => {
-  if (list.length === 0) list = [{ ULID: current.ULID.S }];
-  if (list[list.length - 1].ULID === current.ULID.S) {
-    list[list.length - 1][current.DataType.S] = Object.values(current.DataValue)[0];
-  } else {
-    list[list.length] = { [current.DataType.S]: Object.values(current.DataValue)[0], ULID: current.ULID.S };
-  }
-  return list;
-}, []);

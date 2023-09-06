@@ -106,29 +106,29 @@ resource "aws_lambda_permission" "www_pu10g_com_basic_auth" {
 }
 
 # Lambda 関数の実装（コンテンツ DynamoDB の操作）の zip 圧縮
-data "archive_file" "lambda_www_pu10g_com_dynamo_content_zip" {
+data "archive_file" "lambda_www_pu10g_com_dynamo_crud_zip" {
   type        = "zip"
-  source_dir  = "../dist/lambda/dynamo-content"
-  output_path = "../dist/lambda/dynamo-content.zip"
+  source_dir  = "../dist/lambda/dynamo-crud"
+  output_path = "../dist/lambda/dynamo-crud.zip"
 }
 
-# Lambda関数 www_pu10g_com_dynamo_content を作成
-resource "aws_lambda_function" "www_pu10g_com_dynamo_content" {
-  function_name    = "www_pu10g_com_dynamo_content"
+# Lambda関数 www_pu10g_com_dynamo_crud を作成
+resource "aws_lambda_function" "www_pu10g_com_dynamo_crud" {
+  function_name    = "www_pu10g_com_dynamo_crud"
   role             = aws_iam_role.this.arn
   runtime          = "nodejs18.x"
-  handler          = "dynamo-content.handler"
-  source_code_hash = data.archive_file.lambda_www_pu10g_com_dynamo_content_zip.output_base64sha256
-  filename         = data.archive_file.lambda_www_pu10g_com_dynamo_content_zip.output_path
+  handler          = "dynamo-crud.handler"
+  source_code_hash = data.archive_file.lambda_www_pu10g_com_dynamo_crud_zip.output_base64sha256
+  filename         = data.archive_file.lambda_www_pu10g_com_dynamo_crud_zip.output_path
   layers = [
     aws_lambda_layer_version.layer_aws_sdk.arn
   ]
 }
 
-# Lambda 関数 www_pu10g_com_dynamo_content を API Gateway から叩けるようにする
-resource "aws_lambda_permission" "www_pu10g_com_dynamo_content" {
+# Lambda 関数 www_pu10g_com_dynamo_crud を API Gateway から叩けるようにする
+resource "aws_lambda_permission" "www_pu10g_com_dynamo_crud" {
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.www_pu10g_com_dynamo_content.arn
+  function_name = aws_lambda_function.www_pu10g_com_dynamo_crud.arn
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/*"
 }

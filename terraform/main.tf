@@ -112,9 +112,9 @@ resource "aws_cloudfront_origin_access_control" "this" {
 resource "aws_api_gateway_rest_api" "this" {
   name = "www.${aws_route53_zone.this.name}-api"
   body = templatefile("./openapi.yml", {
-    www_pu10g_com_dynamo_content_arn = aws_lambda_function.www_pu10g_com_dynamo_content.invoke_arn
-    www_pu10g_com_basic_auth_arn     = aws_lambda_function.www_pu10g_com_basic_auth.invoke_arn
-    www_pu10g_com_render_page_arn    = aws_lambda_function.www_pu10g_com_render_page.invoke_arn
+    www_pu10g_com_dynamo_crud_arn = aws_lambda_function.www_pu10g_com_dynamo_crud.invoke_arn
+    www_pu10g_com_basic_auth_arn  = aws_lambda_function.www_pu10g_com_basic_auth.invoke_arn
+    www_pu10g_com_render_page_arn = aws_lambda_function.www_pu10g_com_render_page.invoke_arn
   })
 }
 

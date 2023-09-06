@@ -20,7 +20,7 @@ module.exports = {
 	},
 	target: 'node',
 	entry: {
-		"dynamo-content/dynamo-content": "./dynamo-content/dynamo-content.ts",
+		"dynamo-crud/dynamo-crud": "./dynamo-crud/dynamo-crud.ts",
 		"basic-auth/basic-auth": "./basic-auth/basic-auth.ts",
 		"render-page/render-page": "./render-page/render-page.tsx"
 	},
