@@ -6,7 +6,8 @@ const sanitizeWindow = (() => {
   if (typeof window !== 'undefined') {
     return window;
   } else if (require && require('jsdom')) {
-    return new (require('jsdom').JSDOM('')).window;
+    const { JSDOM } = require('jsdom');
+    return new JSDOM('').window;
   } else {
     throw 'NO WINDOW RESOURCE';
   }
