@@ -7,22 +7,15 @@ module.exports = {
 	mode: "development",
 	context: __dirname,
 	externals: {
-		'aws-sdk': 'aws-sdk',
-		// JSDOMで以下3つの依存解決エラーが出るが、現状影響はないのでexternalsで静める
-		'canvas': 'canvas',
-		'utf-8-validate': 'utf-8-validate',
-		'bufferutil': 'bufferutil'
+		'jsdom': 'jsdom'
 	},
 	builtins: {
 		react: {
 			importSource: 'preact'
 		},
 	},
-	target: 'node',
+	target: 'web',
 	entry: {
-		"dynamo-crud/dynamo-crud": "./dynamo-crud/dynamo-crud.ts",
-		"basic-auth/basic-auth": "./basic-auth/basic-auth.ts",
-		"render-page/render-page": "./render-page/render-page.tsx",
 		"render-page/jsx-test": "./render-page/jsx-test.tsx",
 		"render-page/sample": "./render-page/sample.scss"
 	},
@@ -30,9 +23,6 @@ module.exports = {
 		path: path.resolve(__dirname, './../dist/lambda'),
 		filename: '[name].js',
 		cssFilename: '[name].css',
-		library: {
-			type: 'commonjs'
-		},
 	},
 	module: {
     rules: [

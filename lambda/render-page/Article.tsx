@@ -1,12 +1,20 @@
 import { Html } from "./Html"
 import { parse } from 'marked';
 import createDOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
+
+const sanitizeWindow = (() => {
+  if (typeof window !== 'undefined') {
+    return window;
+  } else if (require && require('jsdom')) {
+    return new (require('jsdom').JSDOM('')).window;
+  } else {
+    throw 'NO WINDOW RESOURCE';
+  }
+})();
 
 export const Article = (props: any) => {
 
-  const window = new JSDOM('').window;
-  const DOMPurify = createDOMPurify(window);
+  const DOMPurify = createDOMPurify(sanitizeWindow);
   const content = DOMPurify.sanitize(parse(props.content));
 
   const head = <>

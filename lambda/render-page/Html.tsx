@@ -12,6 +12,17 @@ export const Html = (props: Props) => <html lang="ja">
     {props.head}
   </head>
   <body>
+    <Header />
     {props.children}
+    <Footer />
   </body>
 </html>
+
+export const Header = (_props: any) => <header>
+  <a href='/' class={'site-logo'}>Pulog</a>
+  <div class={'site-description'}>プログラムのブログ 略してプログ</div>
+</header>
+
+export const Footer = (_props: any) => <footer>
+  <small>&copy; 2020 PULOG AAAAA</small>
+</footer>
