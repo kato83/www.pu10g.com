@@ -95,7 +95,7 @@ exports.handler = async (event: ApiGatewayEvent) => {
         return createResponse(403, 'Request method is invalid.');
     }
   } catch (error) {
-    console.error('Error adding item:', error);
+    console.error(error);
     return createResponse(500, 'ERROR');
   }
 };
