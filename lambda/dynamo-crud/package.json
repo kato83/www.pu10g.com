@@ -1,0 +1,23 @@
+{
+  "name": "lambda",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "description": "",
+  "main": "sample.js",
+  "scripts": {
+    "dev": "rspack serve --config rspack.html.config.js",
+    "build": "rspack build",
+    "tsc": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@rspack/cli": "^0.3.1",
+    "@rspack/core": "^0.3.2",
+    "aws-sdk": "^2.1434.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6",
+    "ulid": "^2.3.0"
+  }
+}

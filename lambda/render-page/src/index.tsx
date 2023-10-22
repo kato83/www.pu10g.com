@@ -1,7 +1,7 @@
 import { S3, DynamoDB } from 'aws-sdk';
 import render from 'preact-render-to-string';
 import { Article } from './Article';
-import { apply } from '../dynamo-utils';
+import { apply } from '../../dynamo-crud/src/dynamo-utils';
 
 const dynamoDB = new DynamoDB();
 

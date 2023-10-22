@@ -16,8 +16,8 @@ module.exports = {
 	},
 	target: 'web',
 	entry: {
-		"render-page/jsx-test": "./render-page/jsx-test.tsx",
-		"render-page/sample": "./render-page/sample.scss"
+		// "render-page/jsx-test": "./render-page/jsx-test.tsx",
+		"assets/css/style": "./render-page/style.scss"
 	},
 	output: {
 		path: path.resolve(__dirname, './../dist/lambda'),

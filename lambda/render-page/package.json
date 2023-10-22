@@ -5,7 +5,7 @@
   "description": "",
   "main": "sample.js",
   "scripts": {
-    "dev": "rspack serve --config rspack.html.config.js",
+    "dev": "ts-node-dev ./src/express.ts",
     "build": "rspack build",
     "tsc": "tsc"
   },
@@ -19,8 +19,10 @@
     "@types/jsdom": "^21.1.2",
     "aws-sdk": "^2.1434.0",
     "dompurify": "^3.0.5",
+    "express": "^4.18.2",
     "jsdom": "^22.1.0",
     "marked": "^8.0.0",
+    "marked-gfm-heading-id": "^3.0.8",
     "preact": "^10.17.1",
     "preact-render-to-string": "^6.2.1",
     "sanitize-html": "^2.11.0",
@@ -29,5 +31,9 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.1.6",
     "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.20",
+    "ts-node-dev": "^2.0.0"
   }
 }

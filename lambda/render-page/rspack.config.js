@@ -20,14 +20,12 @@ module.exports = {
 	},
 	target: 'node',
 	entry: {
-		"dynamo-crud/dynamo-crud": "./dynamo-crud/dynamo-crud.ts",
-		"basic-auth/basic-auth": "./basic-auth/basic-auth.ts",
-		"render-page/render-page": "./render-page/render-page.tsx",
-		"render-page/jsx-test": "./render-page/jsx-test.tsx",
-		"render-page/sample": "./render-page/sample.scss"
+		"render-page/render-page": "./src/index.tsx",
+		// "render-page/jsx-test": "./src/jsx-test.tsx",
+		"assets/css/style": "./src/style.scss"
 	},
 	output: {
-		path: path.resolve(__dirname, './../dist/lambda'),
+		path: path.resolve(__dirname, './../../dist/lambda'),
 		filename: '[name].js',
 		cssFilename: '[name].css',
 		library: {

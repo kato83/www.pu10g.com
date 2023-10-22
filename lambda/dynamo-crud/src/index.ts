@@ -1,6 +1,6 @@
 import { DynamoDB, S3 } from 'aws-sdk';
 import { factory, detectPrng } from 'ulid';
-import { apply, getItem, unapply } from '../dynamo-utils';
+import { apply, getItem, unapply } from './dynamo-utils';
 
 const dynamoDB: AWS.DynamoDB = new DynamoDB();
 const TABLE = {
