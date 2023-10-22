@@ -1,7 +1,4 @@
-import { render } from 'preact-render-to-string';
-import { Article } from './Article';
-
-const content = `
+export const content = `
 webpack というと js ファイルをひとまとめにする（バンドル）するものという認識はあったのですが、css ファイルやsass, scss, stylus を始めとする css
 プリプロセッサファイルなどもバンドルできるのをご存知だったでしょうか。
 
@@ -121,11 +118,9 @@ webpack.config.js #webpack設定用のファイル
 
 あとは以下のコマンドを実行すれば \`dist/bundle.js\` に出力されます。
 
+![](1280x720.png)
+
 \`\`\`shell
 $ npm run webpack
 \`\`\`
 `;
-
-console.log(render(<Article title={'テスト'} content={content} />));
-document.querySelector('#frame iframe')
-  ?.setAttribute('srcdoc', render(<Article title={'テスト'} content={content} />))

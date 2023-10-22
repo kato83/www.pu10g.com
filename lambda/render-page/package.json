@@ -5,7 +5,7 @@
   "description": "",
   "main": "sample.js",
   "scripts": {
-    "dev": "ts-node-dev ./src/express.ts",
+    "dev": "ts-node-dev ./src/express.tsx",
     "build": "rspack build",
     "tsc": "tsc"
   },

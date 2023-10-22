@@ -3,7 +3,6 @@ import { marked, Tokens } from 'marked';
 import createDOMPurify from 'dompurify';
 import { isBrowser } from "./util";
 import { gfmHeadingId } from "marked-gfm-heading-id";
-import { createPortal } from "preact/compat";
 
 const sanitizeWindow = (() => {
   if (isBrowser()) {
@@ -32,10 +31,6 @@ export const Article = (props: any) => {
     <main>
       <article className={'article-detail'}>
         <h1>{props.title}</h1>
-        {createPortal(
-          <meta name={'hoge'} content={'foo'} />,
-          document.head
-        )}
         <details open={true} className={'toc'}>
           <summary>目次</summary>
           <nav aria-label="Chapters">
